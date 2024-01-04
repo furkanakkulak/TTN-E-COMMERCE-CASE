@@ -1,12 +1,23 @@
 [
   {
+    "title": "Hediye 1KG Kahve",
+    "category_id": 2,
+    "category_title": "Kahve",
+    "description": "1 kilogramlık kahve paketi.",
+    "price": 0,
+    "stock_quantity": 99999,
+    "origin": "Karışık",
+    "roast_level": "Orta",
+    "flavor_notes": ["Karışık Notlar"]
+  },
+  {
     "product_id": 1,
     "title": "Harika Kahve",
     "category_id": 2,
     "category_title": "Kahve",
     "description": "Özel karışım, harika lezzet!",
     "price": 24.99,
-    "stock_quantity": 50,
+    "stock_quantity": 100,
     "origin": "Brezilya",
     "roast_level": "Orta",
     "flavor_notes": ["Çikolata", "Fındık", "Vanilya"]
@@ -18,7 +29,7 @@
     "category_title": "Kahve",
     "description": "Güçlü ve yoğun aromalar.",
     "price": 29.99,
-    "stock_quantity": 30,
+    "stock_quantity": 100,
     "origin": "Kolombiya",
     "roast_level": "Koyu",
     "flavor_notes": ["Karamel", "Kara Kiraz", "Baharatlı"]
@@ -30,7 +41,7 @@
     "category_title": "Kahve",
     "description": "Hafif ve ferahlatıcı bir deneyim.",
     "price": 19.99,
-    "stock_quantity": 40,
+    "stock_quantity": 100,
     "origin": "Etiyopya",
     "roast_level": "Hafif",
     "flavor_notes": ["Meyve", "Çiçek", "Nane"]
@@ -42,7 +53,7 @@
     "category_title": "Kahve",
     "description": "Espresso severler için güçlü bir tercih.",
     "price": 27.99,
-    "stock_quantity": 25,
+    "stock_quantity": 100,
     "origin": "İtalya",
     "roast_level": "Orta-Koyu",
     "flavor_notes": ["Çikolata", "Fındık", "Kavrulmuş Ekmek"]
@@ -54,7 +65,7 @@
     "category_title": "Kahve",
     "description": "Uzmanlar tarafından özel olarak hazırlanan karışım.",
     "price": 34.99,
-    "stock_quantity": 20,
+    "stock_quantity": 100,
     "origin": "Karışık",
     "roast_level": "Orta",
     "flavor_notes": ["Karışık Notlar"]
@@ -66,7 +77,7 @@
     "category_title": "Kahve",
     "description": "Kimyasal gübre veya ilaç içermez.",
     "price": 39.99,
-    "stock_quantity": 15,
+    "stock_quantity": 100,
     "origin": "Peru",
     "roast_level": "Hafif",
     "flavor_notes": ["Meyve", "Çiçek", "Ahududu"]
@@ -78,7 +89,7 @@
     "category_title": "Kahve",
     "description": "Türk kahvesi keyfi evinizde!",
     "price": 22.99,
-    "stock_quantity": 35,
+    "stock_quantity": 100,
     "origin": "Türkiye",
     "roast_level": "Orta"
   },
@@ -89,7 +100,7 @@
     "category_title": "Kahve",
     "description": "Vanilya sevenler için rüya gibi bir kahve.",
     "price": 31.99,
-    "stock_quantity": 28,
+    "stock_quantity": 100,
     "origin": "Madagaskar",
     "roast_level": "Orta",
     "flavor_notes": ["Vanilya", "Karamel", "Hafif Baharatlı"]
@@ -101,7 +112,7 @@
     "category_title": "Kahve",
     "description": "Doğal ve organik, Karadeniz'in en iyisi.",
     "price": 26.99,
-    "stock_quantity": 22,
+    "stock_quantity": 100,
     "origin": "Türkiye",
     "roast_level": "Orta-Koyu",
     "flavor_notes": ["Çikolata", "Fındık", "Hafif Baharatlı"]
@@ -113,7 +124,7 @@
     "category_title": "Kahve",
     "description": "Özel filtre yöntemiyle hazırlanmış.",
     "price": 29.99,
-    "stock_quantity": 18,
+    "stock_quantity": 100,
     "origin": "Kenya",
     "roast_level": "Orta",
     "flavor_notes": ["Meyve", "Çiçek", "Şeker Kamışı"]
@@ -125,7 +136,7 @@
     "category_title": "Kahve",
     "description": "Soğuk kahve keyfi!",
     "price": 17.99,
-    "stock_quantity": 45,
+    "stock_quantity": 100,
     "origin": "Kolombiya",
     "roast_level": "Hafif",
     "flavor_notes": ["Çikolata", "Kara Kiraz", "Buzlu"]
@@ -137,7 +148,7 @@
     "category_title": "Kahve",
     "description": "İki lezzet bir arada.",
     "price": 32.99,
-    "stock_quantity": 23,
+    "stock_quantity": 100,
     "origin": "Karışık",
     "roast_level": "Orta-Koyu",
     "flavor_notes": ["Çikolata", "Vanilya", "Fındık"]
@@ -149,7 +160,7 @@
     "category_title": "Kahve",
     "description": "Bergamot aromasıyla canlanın!",
     "price": 28.99,
-    "stock_quantity": 27,
+    "stock_quantity": 100,
     "origin": "Kosta Rika",
     "roast_level": "Orta",
     "flavor_notes": ["Bergamot", "Çiçek", "Meyve"]
@@ -161,7 +172,7 @@
     "category_title": "Kahve",
     "description": "Koyu kavrulmuş bir zevk.",
     "price": 36.99,
-    "stock_quantity": 16,
+    "stock_quantity": 100,
     "origin": "Brexit Coffee Co.",
     "roast_level": "Koyu",
     "flavor_notes": ["Koyu Çikolata", "Fındık", "Kavrulmuş Ekmek"]
@@ -173,7 +184,7 @@
     "category_title": "Kahve",
     "description": "Her fincanda farklı bir lezzet sürprizi!",
     "price": 38.99,
-    "stock_quantity": 14,
+    "stock_quantity": 100,
     "origin": "Dünya Geneli",
     "roast_level": "Orta-Koyu",
     "flavor_notes": ["Karışık Notlar"]
@@ -185,7 +196,7 @@
     "category_title": "Kahve",
     "description": "Doğal şeker kamışı notalarıyla tatlı bir deneyim.",
     "price": 30.99,
-    "stock_quantity": 31,
+    "stock_quantity": 100,
     "origin": "Brasil",
     "roast_level": "Orta",
     "flavor_notes": ["Şeker Kamışı", "Vanilya", "Çikolata"]
@@ -197,7 +208,7 @@
     "category_title": "Kahve",
     "description": "Ballı bir yolculuk!",
     "price": 25.99,
-    "stock_quantity": 29,
+    "stock_quantity": 100,
     "origin": "Etiyopya",
     "roast_level": "Hafif",
     "flavor_notes": ["Bal", "Meyve", "Çiçek"]
@@ -209,7 +220,7 @@
     "category_title": "Kahve",
     "description": "Mocha severler için sihirli bir lezzet.",
     "price": 33.99,
-    "stock_quantity": 21,
+    "stock_quantity": 100,
     "origin": "Gana",
     "roast_level": "Orta-Koyu",
     "flavor_notes": ["Çikolata", "Kahve", "Karamel"]
@@ -221,7 +232,7 @@
     "category_title": "Kahve",
     "description": "Espresso sevenler için egzotik bir seçenek.",
     "price": 35.99,
-    "stock_quantity": 19,
+    "stock_quantity": 100,
     "origin": "Endonezya",
     "roast_level": "Koyu",
     "flavor_notes": ["Çikolata", "Baharatlı", "Vanilya"]
@@ -233,7 +244,7 @@
     "category_title": "Kahve",
     "description": "Tropikal meyve notalarıyla dolu bir rüya.",
     "price": 37.99,
-    "stock_quantity": 17,
+    "stock_quantity": 100,
     "origin": "Kosta Rika",
     "roast_level": "Orta",
     "flavor_notes": ["Mango", "Ananas", "Kokos"]
