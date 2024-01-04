@@ -3,6 +3,8 @@ const CartItem = require('../models/CartItem');
 const ProductService = require('./productService');
 const CouponService = require('./couponService');
 const Product = require('../models/Product');
+const { redisClient, getAsync } = require('../utils/redis');
+const logger = require('../pkg/logger');
 
 const calculateCartTotal = (cartItems) => {
   return cartItems.reduce(
@@ -94,6 +96,9 @@ const createOrder = async (cart, couponCode) => {
     const order = await Order.create({
       totalAmount,
       shippingFee,
+      discountRate: couponId
+        ? Math.floor((discountAmount / totalAmount) * 100)
+        : 0,
       discountAmount,
       netAmount,
       couponId,
@@ -112,18 +117,6 @@ const createOrder = async (cart, couponCode) => {
         await ProductService.updateProductStock(item.product.id, item.quantity);
       })
     );
-
-    // Calculate additional discount based on the cart total with applied discounts
-    const cartTotalWithDiscount = totalAmount - discountAmount;
-    const additionalDiscount = calculateCartTotalDiscount(
-      cartTotalWithDiscount
-    );
-
-    // Update order with additional discount information
-    await order.update({
-      discountAmount: discountAmount + additionalDiscount,
-      netAmount: netAmount - additionalDiscount,
-    });
 
     // Calculate discount rate
     const discountRate =
@@ -153,15 +146,21 @@ const createOrder = async (cart, couponCode) => {
         });
       }
     }
+    redisClient.del('orders', (err, reply) => {
+      if (err) {
+        logger.error('Redis error:', err);
+      } else {
+        logger.info('Data del successfully.');
+      }
+    });
 
-    // Return the order details
     return {
       id: order.id,
       totalAmount,
       shippingFee,
-      discountRate,
-      discountAmount,
-      netAmount,
+      discountRate: Math.floor(discountRate),
+      discountAmount: parseFloat(discountAmount.toFixed(2)),
+      netAmount: parseFloat(netAmount.toFixed(2)),
       couponId,
       cart: products.map((item) => ({
         itemId: item.product.id,
@@ -266,7 +265,9 @@ const updateOrder = async (orderId, updatedCart, newCouponCode) => {
     await order.update({
       totalAmount: updatedTotalAmount,
       shippingFee,
-      discountRate: couponId ? (discountAmount / updatedTotalAmount) * 100 : 0,
+      discountRate: couponId
+        ? Math.floor((discountAmount / updatedTotalAmount) * 100)
+        : 0,
       discountAmount,
       netAmount: updatedNetAmount,
       couponId,
@@ -372,15 +373,24 @@ const updateOrder = async (orderId, updatedCart, newCouponCode) => {
         await ProductService.updateProductStock(1, -1);
       }
     }
+    redisClient.del(['orders', `order${orderId}`], (err, reply) => {
+      if (err) {
+        logger.error('Redis error:', err);
+      } else {
+        logger.info('Data del successfully.');
+      }
+    });
 
     // Return the updated order details
     return {
       id: order.id,
       totalAmount: updatedTotalAmount,
       shippingFee,
-      discountRate: couponId ? (discountAmount / updatedTotalAmount) * 100 : 0,
-      discountAmount,
-      netAmount: updatedNetAmount,
+      discountRate: couponId
+        ? Math.floor((discountAmount / updatedTotalAmount) * 100)
+        : 0,
+      discountAmount: parseFloat(discountAmount.toFixed(2)),
+      netAmount: parseFloat(updatedNetAmount.toFixed(2)),
       couponId,
       cart: updatedProducts.map((item) => ({
         itemId: item.product.id,
@@ -396,58 +406,105 @@ const updateOrder = async (orderId, updatedCart, newCouponCode) => {
 
 const getAllOrders = async () => {
   try {
-    const orders = await Order.findAll({
-      include: [{ model: CartItem, include: [{ model: Product }] }],
-    });
-    console.log(JSON.stringify(orders, null, 2));
+    const cache = await getAsync('orders');
 
-    const formattedOrders = orders.map((order) => ({
-      id: order.id,
-      totalAmount: order.totalAmount,
-      shippingFee: order.shippingFee,
-      discountRate: order.discountRate,
-      discountAmount: order.discountAmount,
-      netAmount: order.netAmount,
-      couponId: order.couponId,
-      cart: order.CartItems.map((item) => ({
-        itemId: item.Product.id,
-        title: item.Product.title,
-        quantity: item.quantity,
-      })),
-    }));
+    if (cache === null) {
+      logger.info('Data not found');
+      const orders = await Order.findAll({
+        include: [{ model: CartItem, include: [{ model: Product }] }],
+      });
 
-    return formattedOrders;
+      const formattedOrders = orders.map((order) => ({
+        id: order.id,
+        totalAmount: order.totalAmount,
+        shippingFee: order.shippingFee,
+        discountRate: order.discountRate,
+        discountAmount: order.discountAmount,
+        netAmount: order.netAmount,
+        couponId: order.couponId,
+        cart: order.CartItems.map((item) => ({
+          itemId: item.Product.id,
+          title: item.Product.title,
+          quantity: item.quantity,
+        })),
+      }));
+
+      redisClient.set(
+        'orders',
+        JSON.stringify(formattedOrders),
+        (err, reply) => {
+          if (err) {
+            logger.error('Redis error:', err);
+          } else {
+            logger.info('Data set successfully.');
+          }
+        }
+      );
+
+      logger.info('Data retrieved successfully: Database');
+      return formattedOrders;
+    } else {
+      logger.info('Data retrieved successfully: Redis cache');
+      return JSON.parse(cache);
+    }
   } catch (error) {
-    throw new Error(error.message);
+    logger.error('Error:', error);
+    throw error;
   }
 };
 
 const getOrderById = async (orderId) => {
   try {
-    const order = await Order.findByPk(orderId, {
-      include: [{ model: CartItem, include: [{ model: Product }] }],
-    });
+    const cache = await getAsync(`order${orderId}`);
 
-    if (!order) {
-      throw new Error('Order not found.');
+    if (cache === null) {
+      logger.info('Data not found');
+      const order = await Order.findByPk(orderId, {
+        include: [{ model: CartItem, include: [{ model: Product }] }],
+      });
+
+      if (!order) {
+        throw new Error('Order not found.');
+      }
+
+      const formattedData = {
+        id: order.id,
+        totalAmount: order.totalAmount,
+        shippingFee: order.shippingFee,
+        discountRate: order.discountRate,
+        discountAmount: order.discountAmount,
+        netAmount: order.netAmount,
+        couponId: order.couponId,
+        cart: order.CartItems.map((item) => ({
+          itemId: item.Product.id,
+          title: item.Product.title,
+          quantity: item.quantity,
+        })),
+      };
+
+      if (formattedData) {
+        redisClient.set(
+          `order${orderId}`,
+          JSON.stringify(formattedData),
+          (err, reply) => {
+            if (err) {
+              logger.error('Redis error:', err);
+            } else {
+              logger.info('Data set successfully.');
+            }
+          }
+        );
+      }
+
+      logger.info('Data retrieved successfully: Database');
+      return formattedData;
+    } else {
+      logger.info('Data retrieved successfully: Redis cache');
+      return JSON.parse(cache);
     }
-
-    return {
-      id: order.id,
-      totalAmount: order.totalAmount,
-      shippingFee: order.shippingFee,
-      discountRate: order.discountRate,
-      discountAmount: order.discountAmount,
-      netAmount: order.netAmount,
-      couponId: order.couponId,
-      cart: order.CartItems.map((item) => ({
-        itemId: item.Product.id,
-        title: item.Product.title,
-        quantity: item.quantity,
-      })),
-    };
   } catch (error) {
-    throw new Error(error.message);
+    logger.error('Error:', error);
+    throw error;
   }
 };
 
@@ -478,6 +535,14 @@ const deleteOrder = async (orderId) => {
 
     // Delete the order itself
     await order.destroy();
+
+    redisClient.del(['orders', `order${orderId}`], (err, reply) => {
+      if (err) {
+        logger.error('Redis error:', err);
+      } else {
+        logger.info('Data del successfully.');
+      }
+    });
 
     return { message: 'Order deleted successfully.' };
   } catch (error) {

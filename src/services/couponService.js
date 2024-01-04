@@ -1,4 +1,6 @@
 const Coupon = require('../models/Coupon');
+const logger = require('../pkg/logger');
+const { getAsync, redisClient } = require('../utils/redis');
 
 const validateCouponFormat = (couponCode) => {
   const regex = /\d.*T{3,}.*\d/;
@@ -31,6 +33,13 @@ const addCoupon = async ({ code }) => {
       code,
       isActive: true,
     });
+    redisClient.del('coupons', (err, reply) => {
+      if (err) {
+        logger.error('Redis error:', err);
+      } else {
+        logger.info('Data del successfully.');
+      }
+    });
     return { coupon: newCoupon };
   } catch (error) {
     return { error: error.message };
@@ -39,23 +48,65 @@ const addCoupon = async ({ code }) => {
 
 const getAllCoupons = async () => {
   try {
-    const coupons = await Coupon.findAll();
-    return { coupons };
+    const cache = await getAsync('coupons');
+
+    if (cache === null) {
+      logger.info('Data not found');
+      const coupons = await Coupon.findAll();
+
+      redisClient.set('coupons', JSON.stringify(coupons), (err, reply) => {
+        if (err) {
+          logger.error('Redis error:', err);
+        } else {
+          logger.info('Data set successfully.');
+        }
+      });
+
+      logger.info('Data retrieved successfully: Database');
+      return coupons;
+    } else {
+      logger.info('Data retrieved successfully: Redis cache');
+      return JSON.parse(cache);
+    }
   } catch (error) {
-    return { error: error.message };
+    logger.error('Error:', error);
+    throw error;
   }
 };
 
 const getCouponById = async (couponId) => {
   try {
-    const coupon = await Coupon.findByPk(couponId);
-    if (coupon) {
-      return { coupon };
+    const cache = await getAsync(`coupon${couponId}`);
+
+    if (cache === null) {
+      logger.info('Data not found');
+      const coupon = await Coupon.findByPk(couponId);
+
+      if (coupon) {
+        redisClient.set(
+          `coupon${couponId}`,
+          JSON.stringify(coupon),
+          (err, reply) => {
+            if (err) {
+              logger.error('Redis error:', err);
+            } else {
+              logger.info('Data set successfully.');
+            }
+          }
+        );
+      } else {
+        return { error: 'Coupon not found.' };
+      }
+
+      logger.info('Data retrieved successfully: Database');
+      return coupon;
     } else {
-      return { error: 'Coupon not found.' };
+      logger.info('Data retrieved successfully: Redis cache');
+      return JSON.parse(cache);
     }
   } catch (error) {
-    return { error: error.message };
+    logger.error('Error:', error);
+    throw error;
   }
 };
 
@@ -68,6 +119,13 @@ const updateCoupon = async (couponId, { code, isActive }) => {
         updatedCoupon.isActive = isActive;
       }
       await updatedCoupon.save();
+      redisClient.del(['coupons', `coupon${couponId}`], (err, reply) => {
+        if (err) {
+          logger.error('Redis error:', err);
+        } else {
+          logger.info('Data del successfully.');
+        }
+      });
       return { coupon: updatedCoupon };
     } else {
       return { error: 'Coupon not found.' };
@@ -83,6 +141,16 @@ const deactivateCoupon = async (couponId) => {
     if (coupon) {
       coupon.isActive = false;
       await coupon.save();
+      redisClient.del(['coupons', `coupon${couponId}`], (err, reply) => {
+        if (err) {
+          logger.error('Redis error:', err);
+        } else {
+          logger.info('Data del successfully.');
+        }
+      });
+      if (coupon.isActive === false) {
+        return { error: 'Coupon is already deactived.' };
+      }
       return { message: 'Coupon deactivated successfully.' };
     } else {
       return { error: 'Coupon not found.' };

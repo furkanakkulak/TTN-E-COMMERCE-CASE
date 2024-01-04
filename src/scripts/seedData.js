@@ -3,6 +3,7 @@ const path = require('path');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const sequelize = require('../utils/database');
+const Coupon = require('../models/Coupon');
 require('dotenv').config();
 
 const seedData = async () => {
@@ -39,6 +40,13 @@ const seedData = async () => {
 
     // Bulk insert data into the database
     await Product.bulkCreate(productsWithCategoryId);
+
+    await Coupon.bulkCreate([
+      {
+        code: 'TTN2024TTT001',
+        discountRate: 30,
+      },
+    ]);
     console.log('Seed data added to the database.');
   } catch (error) {
     console.error('Error seeding data:', error);

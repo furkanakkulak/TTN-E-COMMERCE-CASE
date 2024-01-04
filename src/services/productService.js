@@ -1,11 +1,11 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
+const { redisClient, getAsync } = require('../utils/redis');
+const logger = require('../pkg/logger');
 
-// Map product data for consistent response format
 const mapProductData = (data, options = {}) => {
   const { excludeTimestamps = true } = options;
 
-  // Create a standardized result object
   const result = {
     id: data.id,
     title: data.title,
@@ -16,10 +16,9 @@ const mapProductData = (data, options = {}) => {
     roastLevel: data.roastLevel,
     flavorNotes: data.flavorNotes,
     categoryId: data.categoryId,
-    categoryTitle: data.Category ? data.Category.title : undefined,
+    categoryTitle: data.Category ? data.Category.title : null,
   };
 
-  // Include timestamps if the option is not excluded
   if (!excludeTimestamps) {
     result.createdAt = data.createdAt;
     result.updatedAt = data.updatedAt;
@@ -28,85 +27,145 @@ const mapProductData = (data, options = {}) => {
   return result;
 };
 
-// Retrieve all products with category information
 const getAllProducts = async () => {
-  const products = await Product.findAll({
-    include: Category,
-  });
-  return products.map((product) => mapProductData(product));
-};
+  try {
+    const cache = await getAsync('products');
 
-// Retrieve a product by ID with category information
-const getProductById = async (productId) => {
-  const product = await Product.findByPk(productId, {
-    include: Category,
-  });
+    if (cache === null) {
+      logger.info('Data not found');
+      const products = await Product.findAll({
+        include: Category,
+      });
 
-  // Return null if the product is not found
-  if (!product) {
-    return null;
+      redisClient.set(
+        'products',
+        JSON.stringify(products.map((product) => mapProductData(product))),
+        (err, reply) => {
+          if (err) {
+            logger.error('Redis error:', err);
+          } else {
+            logger.info('Data set successfully.');
+          }
+        }
+      );
+
+      logger.info('Data retrieved successfully: Database');
+      return products.map((product) => mapProductData(product));
+    } else {
+      logger.info('Data retrieved successfully: Redis cache');
+      return JSON.parse(cache);
+    }
+  } catch (error) {
+    logger.error('Error:', error);
+    throw error;
   }
-
-  return mapProductData(product);
 };
 
-// Update product stock quantity
+const getProductById = async (productId) => {
+  try {
+    const cache = await getAsync(`product${productId}`);
+
+    if (cache === null) {
+      logger.info('Data not found');
+      const product = await Product.findByPk(productId, {
+        include: Category,
+      });
+
+      if (product) {
+        redisClient.set(
+          `product${productId}`,
+          JSON.stringify(mapProductData(product)),
+          (err, reply) => {
+            if (err) {
+              logger.error('Redis error:', err);
+            } else {
+              logger.info('Data set successfully.');
+            }
+          }
+        );
+      }
+
+      logger.info('Data retrieved successfully: Database');
+      return mapProductData(product);
+    } else {
+      logger.info('Data retrieved successfully: Redis cache');
+      return JSON.parse(cache);
+    }
+  } catch (error) {
+    logger.error('Error:', error);
+    throw error;
+  }
+};
+
 const updateProductStock = async (productId, quantity) => {
   const product = await Product.findByPk(productId);
-  // Throw an error if the product is not found
   if (!product) {
     throw new Error(`Product with ID ${productId} not found.`);
   }
-
-  // Update stock quantity and save the changes
   product.stockQuantity -= quantity;
   await product.save();
+  redisClient.del(['products', `product${productId}`], (err, reply) => {
+    if (err) {
+      logger.error('Redis error:', err);
+    } else {
+      logger.info('Data del successfully.');
+    }
+  });
+  redisClient.del(`products`, (err, reply) => {
+    if (err) {
+      logger.error('Redis error:', err);
+    } else {
+      logger.info('Data del successfully.');
+    }
+  });
 };
 
-// Create a new product
 const createProduct = async (productData) => {
   const newProduct = await Product.create(productData);
+  redisClient.del(`products`, (err, reply) => {
+    if (err) {
+      logger.error('Redis error:', err);
+    } else {
+      logger.info('Data del successfully.');
+    }
+  });
   return mapProductData(newProduct);
 };
 
-// Update a product
 const updateProduct = async (productId, updatedProductData) => {
   const updatedProduct = await Product.findByPk(productId);
 
-  // Check if the product exists before updating
   if (updatedProduct) {
-    // Use sequelize's update method for full update
     await updatedProduct.update(updatedProductData);
+    redisClient.del(['products', `product${productId}`], (err, reply) => {
+      if (err) {
+        logger.error('Redis error:', err);
+      } else {
+        logger.info('Data del successfully.');
+      }
+    });
     return mapProductData(updatedProduct);
   } else {
     return null;
   }
 };
 
-// Partially update a product
-const partialUpdateProduct = async (productId, updatedProductData) => {
-  const updatedProduct = await Product.findByPk(productId);
-
-  // Check if the product exists before updating
-  if (updatedProduct) {
-    // Use sequelize's partial update method
-    await updatedProduct.update(updatedProductData);
-    return mapProductData(updatedProduct);
-  } else {
-    return null;
-  }
-};
-
-// Delete a product by ID
 const deleteProduct = async (productId) => {
-  // Delete the product and return true if any rows were deleted
   const result = await Product.destroy({
     where: {
       id: productId,
     },
   });
 
-  return result > 0;
+  redisClient.del(['products', `product${productId}`], (err, reply) => {
+    if (err) {
+      logger.error('Redis error:', err);
+    } else {
+      logger.info('Data del successfully.');
+    }
+  });
+
+  return result > 0; // Returns true if any rows were deleted
 };
 
 module.exports = {
@@ -116,5 +175,4 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
-  partialUpdateProduct,
 };

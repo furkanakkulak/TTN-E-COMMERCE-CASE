@@ -35,8 +35,8 @@ const getAllCoupons = async (req, res) => {
 };
 
 const getCouponById = async (req, res) => {
-  const { couponId } = req.params;
-  const result = await CouponService.getCouponById(couponId);
+  const { id } = req.params;
+  const result = await CouponService.getCouponById(id);
   if (result.error) {
     return res.status(404).json({ error: result.error });
   }
@@ -66,6 +66,7 @@ const updateCoupon = async (req, res) => {
 const deactivateCoupon = async (req, res) => {
   const { id } = req.params;
   const result = await CouponService.deactivateCoupon(id);
+  console.log(result);
   if (result.error) {
     return res.status(404).json({ error: result.error });
   }

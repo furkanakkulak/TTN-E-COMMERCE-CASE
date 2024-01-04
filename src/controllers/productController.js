@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const ProductService = require('../services/productService');
 const ProductValidation = require('../validation/productValidation');
+const logger = require('../pkg/logger');
 
 // Get all products
 const getAllProducts = async (req, res) => {
@@ -8,7 +9,7 @@ const getAllProducts = async (req, res) => {
     const products = await ProductService.getAllProducts();
     res.json(products);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -26,7 +27,7 @@ const getProductById = async (req, res) => {
       res.status(404).json({ error: 'Product not found' });
     }
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -46,7 +47,7 @@ const createProduct = async (req, res) => {
     const newProduct = await ProductService.createProduct(productData);
     res.status(201).json(newProduct);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -76,37 +77,7 @@ const updateProduct = async (req, res) => {
       res.status(404).json({ error: 'Product not found' });
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-
-// Partially update a product
-const partialUpdateProduct = async (req, res) => {
-  const productId = req.params.productId;
-  const updatedProductData = req.body;
-
-  // Validate updated product data using Joi
-  const { error } =
-    ProductValidation.partialUpdateProductSchema.validate(updatedProductData);
-  if (error) {
-    // Return validation error with a 400 Bad Request status code
-    return res.status(400).json({ error: error.details[0].message });
-  }
-
-  try {
-    const updatedProduct = await ProductService.partialUpdateProduct(
-      productId,
-      updatedProductData
-    );
-
-    if (updatedProduct) {
-      res.json(updatedProduct);
-    } else {
-      res.status(404).json({ error: 'Product not found' });
-    }
-  } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -124,7 +95,7 @@ const deleteProduct = async (req, res) => {
       res.status(404).json({ error: 'Product not found' });
     }
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -135,5 +106,4 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
-  partialUpdateProduct,
 };

@@ -1,3 +1,4 @@
+const logger = require('../pkg/logger');
 const orderService = require('../services/orderService');
 const {
   newOrderSchema,
@@ -21,7 +22,7 @@ const createOrder = async (req, res, next) => {
 
     res.status(201).json(order);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -50,7 +51,7 @@ const editOrder = async (req, res, next) => {
 
     res.status(200).json(updatedOrder);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };

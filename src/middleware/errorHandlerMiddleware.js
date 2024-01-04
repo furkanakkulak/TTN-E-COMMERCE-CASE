@@ -1,6 +1,8 @@
+const logger = require('../pkg/logger');
+
 // Define a generic error handling middleware
 const errorHandler = (err, req, res, next) => {
-  console.error(err);
+  logger.error(err);
 
   // Set default status code and message
   let statusCode = 500;
