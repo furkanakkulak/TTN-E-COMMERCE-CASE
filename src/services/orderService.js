@@ -5,6 +5,7 @@ const CouponService = require('./couponService');
 const Product = require('../models/Product');
 const { redisClient, getAsync } = require('../utils/redis');
 const logger = require('../pkg/logger');
+const sendMail = require('../utils/mailService');
 
 const calculateCartTotal = (cartItems) => {
   return cartItems.reduce(
@@ -154,7 +155,7 @@ const createOrder = async (cart, couponCode) => {
       }
     });
 
-    return {
+    const orderDetails = {
       id: order.id,
       totalAmount,
       shippingFee,
@@ -168,6 +169,12 @@ const createOrder = async (cart, couponCode) => {
         quantity: item.quantity,
       })),
     };
+
+    const emailSubject = 'Order Created - ' + order.id;
+    const emailText = 'Your order has been created successfully.';
+    sendMail(emailSubject, emailText, orderDetails);
+
+    return orderDetails;
   } catch (error) {
     // Handle errors and return an error response
     return { error: error.message };
@@ -381,8 +388,7 @@ const updateOrder = async (orderId, updatedCart, newCouponCode) => {
       }
     });
 
-    // Return the updated order details
-    return {
+    const orderDetails = {
       id: order.id,
       totalAmount: updatedTotalAmount,
       shippingFee,
@@ -398,6 +404,13 @@ const updateOrder = async (orderId, updatedCart, newCouponCode) => {
         quantity: item.quantity,
       })),
     };
+    const emailSubject = 'Order Updated - ' + order.id;
+    const emailText = 'Your order has been updated successfully.';
+
+    sendMail(emailSubject, emailText, orderDetails);
+
+    // Return the updated order details
+    return orderDetails;
   } catch (error) {
     // Handle errors and return an error response
     return { error: error.message };
