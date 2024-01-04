@@ -3,6 +3,8 @@ const express = require('express');
 require('dotenv').config();
 const { errorHandler } = require('./middleware/errorHandlerMiddleware');
 const productRoutes = require('./routes/productRoutes');
+const couponRoutes = require('./routes/couponRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 const bodyParser = require('body-parser');
 const sequelize = require('./utils/database');
 
@@ -14,6 +16,8 @@ app.use(bodyParser.json());
 
 // Route handling for product-related operations
 app.use('/products', productRoutes);
+app.use('/coupons', couponRoutes);
+app.use('/orders', orderRoutes);
 
 // Global error handler middleware to handle errors from routes
 app.use(errorHandler);
