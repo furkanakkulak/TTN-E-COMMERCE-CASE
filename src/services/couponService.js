@@ -148,9 +148,6 @@ const deactivateCoupon = async (couponId) => {
           logger.info('Data del successfully.');
         }
       });
-      if (coupon.isActive === false) {
-        return { error: 'Coupon is already deactived.' };
-      }
       return { message: 'Coupon deactivated successfully.' };
     } else {
       return { error: 'Coupon not found.' };

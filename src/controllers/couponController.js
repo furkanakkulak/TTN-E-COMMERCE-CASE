@@ -69,6 +69,8 @@ const deactivateCoupon = async (req, res) => {
   console.log(result);
   if (result.error) {
     return res.status(404).json({ error: result.error });
+  } else if (result.message) {
+    return res.json(result);
   }
   return res.json(result);
 };
